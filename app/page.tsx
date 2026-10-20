@@ -495,7 +495,7 @@ export default function Page() {
             <p className="text-lg font-medium leading-7">{t.contactText}</p>
 
             <a
-              href="mailto:akinsikufemi@onpeps.com"
+              href="mailto:akinsikufemi@onpeeps.com"
               className="mt-6 inline-flex items-center gap-3 rounded-full bg-[#17211b] px-5 py-3 text-sm font-semibold text-white"
             >
               {t.start}
@@ -503,7 +503,7 @@ export default function Page() {
             </a>
 
             <p className="mt-4 text-xs text-[#68736b]">
-              akinsikufemi@onpeps.com
+              akinsikufemi@onpeeps.com
             </p>
           </div>
         </section>
