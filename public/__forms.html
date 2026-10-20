@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <!-- Lets Netlify detect the contact form in app/page.tsx at build time. Keep the field names in sync. -->
+    <form name="host-enquiry" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="host-enquiry" />
+      <input name="bot-field" />
+      <input name="language" />
+      <input name="name" />
+      <input name="email" type="email" />
+      <input name="phone" type="tel" />
+      <input name="place" />
+      <textarea name="message"></textarea>
+    </form>
+  </body>
+</html>

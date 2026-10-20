@@ -1,17 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   ArrowRight,
   Building2,
   Check,
   ChevronDown,
   Coffee,
+  CreditCard,
   Dumbbell,
+  HandCoins,
   Mail,
   MapPin,
   Menu,
+  MessageCircle,
   PackageCheck,
+  Phone,
+  Plug,
   ShieldCheck,
   Sparkles,
   Truck,
@@ -21,11 +26,23 @@ import {
 
 type Language = "pt" | "en";
 
+// Contact details. Switch the email to vending@onpeeps.com once that inbox exists.
+const CONTACT_EMAIL = "akinsikufemi@onpeeps.com";
+// Phone and WhatsApp number in international format, e.g. "+351912345678".
+// The phone and WhatsApp links stay hidden while this is empty.
+const CONTACT_PHONE: string = "+351 912873688";
+
+// Photo of the machine for the hero. While this is null, the illustration is shown.
+// Example: { src: "/machine.jpg", alt: "OnPeeps vending machine" }
+const MACHINE_PHOTO: { src: string; alt: string } | null = null;
+
+const FORM_NAME = "host-enquiry";
+
 const content = {
   pt: {
-    nav: ["Por que a OnPeeps", "Como funciona", "Para o seu espaço"],
+    nav: ["Porquê a OnPeeps", "Como funciona", "Para o seu espaço"],
     cta: "Seja um local parceiro",
-    badge: "Pausas melhores, do jeito certo",
+    badge: "Pausas melhores, da forma certa",
     title: (
       <>
         Seja parceiro da
@@ -35,61 +52,79 @@ const content = {
         Vending.
       </>
     ),
+    noCost: "Sem custos para o seu espaço",
+    noCostNote: "só precisamos de uma tomada.",
     intro:
-      "Estamos procurando academias, escritórios, residências estudantis, armazéns e espaços comerciais interessados em receber uma máquina de snacks e bebidas.",
+      "Estamos à procura de ginásios, escritórios, residências de estudantes, armazéns e espaços comerciais interessados em acolher uma máquina de snacks e bebidas.",
     offer: "Veja o que oferecemos",
     difference: "A diferença OnPeeps",
     diffTitle: "Uma pequena comodidade que faz uma grande diferença.",
     cards: [
       [
         "Trazemos a máquina",
-        "Você disponibiliza o espaço. Nós compramos, instalamos, abastecemos, limpamos e cuidamos da máquina.",
+        "Disponibiliza o espaço. Nós compramos, instalamos, abastecemos, limpamos e fazemos a manutenção da máquina.",
       ],
       [
-        "Sempre confiável",
-        "Mantemos os produtos frescos e as máquinas funcionando, com suporte rápido quando necessário.",
+        "Sempre fiável",
+        "Mantemos os produtos frescos e as máquinas a funcionar, com apoio rápido sempre que necessário.",
       ],
       [
-        "Feito para as pessoas",
-        "Uma seleção cuidadosa de snacks e bebidas, adaptada às pessoas do seu espaço.",
+        "Pensado para as pessoas",
+        "Uma seleção cuidada de snacks e bebidas, adaptada às pessoas do seu espaço.",
       ],
     ],
-    spaces: "Onde nos encaixamos",
+    benefitsEyebrow: "O que ganha",
+    benefitsTitle: "Sem custos. Só vantagens.",
+    benefits: [
+      [
+        "Sem custos para si",
+        "Sem taxas de instalação nem de serviço. Só precisamos do espaço e de uma tomada.",
+      ],
+      [
+        "Ganha com as vendas",
+        "Recebe uma comissão sobre as vendas ou outro modelo a acordar, à medida do seu espaço.",
+      ],
+      [
+        "Pagamento fácil",
+        "Cartão, contactless (Apple Pay e Google Pay) e dinheiro.",
+      ],
+    ],
+    spaces: "Onde encaixamos",
     spacesTitle: (
       <>
-        Coloque praticidade
+        Leve conveniência
         <br />
-        nos lugares certos.
+        aos lugares certos.
       </>
     ),
     spacesText:
-      "Seja durante uma pausa, entre treinos ou a caminho de casa, a OnPeeps está presente.",
+      "Seja numa pausa, entre treinos ou a caminho de casa, a OnPeeps está lá.",
     placements: [
-      "Academias e clubes",
+      "Ginásios e clubes",
       "Escritórios e empresas",
       "Armazéns e logística",
-      "Residências estudantis",
+      "Residências de estudantes",
     ],
     simple: "Simples desde o primeiro dia",
-    howTitle: "Você oferece o espaço. Nós oferecemos tudo de bom.",
+    howTitle: "Disponibiliza o espaço. Nós tratamos do resto.",
     steps: [
       [
         "01",
-        "Conte-nos sobre o seu espaço",
-        "Compartilhe detalhes sobre o local, o movimento e o que as pessoas precisam.",
+        "Fale-nos do seu espaço",
+        "Partilhe detalhes sobre o local, o movimento e aquilo de que as pessoas precisam.",
       ],
       [
         "02",
         "Encontramos a melhor solução",
-        "Indicamos a máquina, os produtos e o posicionamento ideais para o seu espaço.",
+        "Recomendamos a máquina, os produtos e a localização ideais para o seu espaço.",
       ],
       [
         "03",
-        "Instalamos e cuidamos de tudo",
-        "Depois da aprovação, levamos a máquina, mantemos o estoque e cuidamos de tudo.",
+        "Instalamos e tratamos de tudo",
+        "Após a aprovação, levamos a máquina, repomos o stock e tratamos de tudo.",
       ],
     ],
-    contactEyebrow: "Vamos facilitar",
+    contactEyebrow: "Vamos simplificar",
     contactTitle: (
       <>
         O seu espaço pode
@@ -98,9 +133,21 @@ const content = {
       </>
     ),
     contactText:
-      "Tem interesse em receber uma máquina de vending no seu local?",
-    start: "Vamos conversar",
-    footer: "Conveniência, pensada para você.",
+      "Tem interesse em ter uma máquina de venda automática no seu espaço?",
+    form: {
+      name: "Nome",
+      email: "Email",
+      phone: "Telefone (opcional)",
+      place: "Nome e localização do espaço",
+      message: "Mensagem (opcional)",
+      submit: "Enviar pedido",
+      sending: "A enviar…",
+      sent: "Obrigado! Entraremos em contacto em breve.",
+      error: "Não foi possível enviar. Tente novamente ou envie-nos um email.",
+    },
+    reachUs: "Ou fale connosco diretamente",
+    call: "Ligar",
+    footer: "Conveniência, pensada para si.",
   },
 
   en: {
@@ -116,6 +163,8 @@ const content = {
         Vending.
       </>
     ),
+    noCost: "No cost to your space",
+    noCostNote: "all we need is a power outlet.",
     intro:
       "We are looking for gyms, offices, student residences, warehouses, and commercial spaces interested in hosting a snack and beverage vending machine.",
     offer: "See what we offer",
@@ -134,6 +183,19 @@ const content = {
         "Made for people",
         "A thoughtful range of snacks and drinks, tailored to the people in your space.",
       ],
+    ],
+    benefitsEyebrow: "What you get",
+    benefitsTitle: "No cost. Only upside.",
+    benefits: [
+      [
+        "No cost to you",
+        "No installation or service fees. All we need is the space and a power outlet.",
+      ],
+      [
+        "Earn from sales",
+        "Receive a commission on sales, or another arrangement agreed to suit your space.",
+      ],
+      ["Easy to pay", "Card, contactless (Apple Pay and Google Pay) and cash."],
     ],
     spaces: "Where we fit in",
     spacesTitle: (
@@ -179,18 +241,35 @@ const content = {
       </>
     ),
     contactText: "Interested in hosting a vending machine at your location?",
-    start: "Start a conversation",
+    form: {
+      name: "Name",
+      email: "Email",
+      phone: "Phone (optional)",
+      place: "Space name and location",
+      message: "Message (optional)",
+      submit: "Send request",
+      sending: "Sending…",
+      sent: "Thanks! We'll be in touch soon.",
+      error: "Couldn't send. Please try again or email us.",
+    },
+    reachUs: "Or reach us directly",
+    call: "Call",
     footer: "Convenience, thoughtfully delivered.",
   },
 } as const;
 
 const placementIcons = [Dumbbell, Building2, Warehouse, PackageCheck];
+const benefitIcons = [Plug, HandCoins, CreditCard];
 
 export default function Page() {
   const [language, setLanguage] = useState<Language>("pt");
   const [menuOpen, setMenuOpen] = useState(false);
 
   const t = content[language];
+
+  useEffect(() => {
+    document.documentElement.lang = language === "pt" ? "pt-PT" : "en";
+  }, [language]);
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -304,7 +383,20 @@ export default function Page() {
               {t.title}
             </h1>
 
-            <p className="mt-8 max-w-lg text-lg leading-8 text-[#536057]">
+            <p className="mt-8 flex max-w-lg items-start gap-3 text-lg font-semibold leading-7">
+              <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[#c7f36b]">
+                <Check size={15} />
+              </span>
+              <span>
+                {t.noCost}
+                <span className="font-normal text-[#536057]">
+                  {" "}
+                  – {t.noCostNote}
+                </span>
+              </span>
+            </p>
+
+            <p className="mt-5 max-w-lg text-lg leading-8 text-[#536057]">
               {t.intro}
             </p>
 
@@ -327,42 +419,52 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Vending machine illustration */}
-          <div className="relative mx-auto h-[430px] w-full max-w-[530px] lg:h-[560px]">
-            <div className="absolute inset-x-8 bottom-0 top-8 rounded-[48%_48%_18%_18%] bg-[#dcecc4] lg:inset-x-12" />
+          {/* Vending machine photo, or the illustration until a photo is set */}
+          {MACHINE_PHOTO ? (
+            <div className="relative mx-auto h-[430px] w-full max-w-[530px] overflow-hidden rounded-[2.5rem] bg-[#dcecc4] lg:h-[560px]">
+              <img
+                src={MACHINE_PHOTO.src}
+                alt={MACHINE_PHOTO.alt}
+                className="size-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="relative mx-auto h-[430px] w-full max-w-[530px] lg:h-[560px]">
+              <div className="absolute inset-x-8 bottom-0 top-8 rounded-[48%_48%_18%_18%] bg-[#dcecc4] lg:inset-x-12" />
 
-            <div className="absolute left-1/2 top-1/2 z-10 h-[365px] w-[215px] -translate-x-1/2 -translate-y-1/2 rounded-[23px] border-[9px] border-[#243128] bg-[#f0f2e9] shadow-[18px_24px_0_#aec68c] lg:h-[450px] lg:w-[270px]">
-              <div className="absolute inset-x-3 top-3 h-[220px] rounded-[13px] bg-[#31443b] p-4 lg:h-[285px]">
-                <div className="flex justify-between text-[9px] font-bold tracking-[.2em] text-[#c7f36b]">
-                  <span>ONPEEPS</span>
-                  <span>24/7</span>
+              <div className="absolute left-1/2 top-1/2 z-10 h-[365px] w-[215px] -translate-x-1/2 -translate-y-1/2 rounded-[23px] border-[9px] border-[#243128] bg-[#f0f2e9] shadow-[18px_24px_0_#aec68c] lg:h-[450px] lg:w-[270px]">
+                <div className="absolute inset-x-3 top-3 h-[220px] rounded-[13px] bg-[#31443b] p-4 lg:h-[285px]">
+                  <div className="flex justify-between text-[9px] font-bold tracking-[.2em] text-[#c7f36b]">
+                    <span>ONPEEPS</span>
+                    <span>24/7</span>
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-2 gap-2 lg:mt-10">
+                    <span className="h-20 rounded-md bg-[#edbb67]" />
+                    <span className="h-20 rounded-md bg-[#d8896e]" />
+                    <span className="h-20 rounded-md bg-[#c7f36b]" />
+                    <span className="h-20 rounded-md bg-[#f4e2be]" />
+                  </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-2 lg:mt-10">
-                  <span className="h-20 rounded-md bg-[#edbb67]" />
-                  <span className="h-20 rounded-md bg-[#d8896e]" />
-                  <span className="h-20 rounded-md bg-[#c7f36b]" />
-                  <span className="h-20 rounded-md bg-[#f4e2be]" />
-                </div>
+                <div className="absolute inset-x-7 bottom-14 h-2 rounded bg-[#c5cdc1]" />
+
+                <div className="absolute bottom-6 left-1/2 size-6 -translate-x-1/2 rounded-full bg-[#c7f36b] shadow-[0_0_0_4px_#d5ddd0]" />
               </div>
 
-              <div className="absolute inset-x-7 bottom-14 h-2 rounded bg-[#c5cdc1]" />
+              <div className="absolute right-0 top-8 z-20 flex rotate-6 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-xs font-semibold shadow-xl shadow-[#536057]/10">
+                <span className="flex size-8 items-center justify-center rounded-full bg-[#c7f36b]">
+                  <Check size={16} />
+                </span>
+                {language === "pt" ? "Sempre abastecida" : "Freshly stocked"}
+              </div>
 
-              <div className="absolute bottom-6 left-1/2 size-6 -translate-x-1/2 rounded-full bg-[#c7f36b] shadow-[0_0_0_4px_#d5ddd0]" />
+              <div className="absolute bottom-14 left-0 z-20 flex -rotate-6 items-center gap-2 rounded-2xl bg-[#17211b] px-4 py-3 text-xs font-semibold text-white shadow-xl">
+                <MapPin size={16} className="text-[#c7f36b]" />
+                {language === "pt" ? "No seu bairro" : "In your neighbourhood"}
+              </div>
             </div>
-
-            <div className="absolute right-0 top-8 z-20 flex rotate-6 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-xs font-semibold shadow-xl shadow-[#536057]/10">
-              <span className="flex size-8 items-center justify-center rounded-full bg-[#c7f36b]">
-                <Check size={16} />
-              </span>
-              {language === "pt" ? "Sempre abastecida" : "Freshly stocked"}
-            </div>
-
-            <div className="absolute bottom-14 left-0 z-20 flex -rotate-6 items-center gap-2 rounded-2xl bg-[#17211b] px-4 py-3 text-xs font-semibold text-white shadow-xl">
-              <MapPin size={16} className="text-[#c7f36b]" />
-              {language === "pt" ? "No seu bairro" : "In your neighbourhood"}
-            </div>
-          </div>
+          )}
         </section>
 
         {/* Why OnPeeps */}
@@ -391,6 +493,52 @@ export default function Page() {
                   <h3 className="font-semibold">{title}</h3>
 
                   <p className="mt-2 text-sm leading-6 text-[#68736b]">
+                    {text}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Benefits */}
+        <section id="benefits" className="pt-20 lg:pt-28">
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-[#809b62]">
+            {t.benefitsEyebrow}
+          </p>
+
+          <h2 className="mt-4 text-4xl font-semibold tracking-[-.055em] sm:text-6xl">
+            {t.benefitsTitle}
+          </h2>
+
+          <div className="mt-12 grid gap-3 md:grid-cols-3">
+            {t.benefits.map(([title, text], i) => {
+              const Icon = benefitIcons[i];
+
+              return (
+                <div
+                  key={title}
+                  className={`rounded-3xl p-7 ${
+                    i === 0 ? "bg-[#17211b] text-white" : "bg-[#e9e5d8]"
+                  }`}
+                >
+                  <span
+                    className={`flex size-11 items-center justify-center rounded-full ${
+                      i === 0 ? "bg-[#c7f36b] text-[#17211b]" : "bg-white/70"
+                    }`}
+                  >
+                    <Icon size={20} />
+                  </span>
+
+                  <h3 className="mt-10 text-xl font-semibold tracking-[-.03em]">
+                    {title}
+                  </h3>
+
+                  <p
+                    className={`mt-2 text-sm leading-6 ${
+                      i === 0 ? "text-white/65" : "text-[#68736b]"
+                    }`}
+                  >
                     {text}
                   </p>
                 </div>
@@ -486,25 +634,53 @@ export default function Page() {
               {t.contactEyebrow}
             </p>
 
-            <h2 className="mt-4 max-w-xl text-5xl font-semibold leading-[.95] tracking-[-.065em] sm:text-7xl">
+            <h2 className="mt-4 max-w-xl text-[2.6rem] font-semibold leading-[.95] tracking-[-.065em] sm:text-7xl">
               {t.contactTitle}
             </h2>
           </div>
 
-          <div className="max-w-sm rounded-3xl bg-[#e1edcf] p-7">
+          <div className="w-full rounded-3xl bg-[#e1edcf] p-7 lg:max-w-md">
             <p className="text-lg font-medium leading-7">{t.contactText}</p>
 
-            <a
-              href="mailto:akinsikufemi@onpeeps.com"
-              className="mt-6 inline-flex items-center gap-3 rounded-full bg-[#17211b] px-5 py-3 text-sm font-semibold text-white"
-            >
-              {t.start}
-              <Mail size={16} />
-            </a>
+            <ContactForm form={t.form} language={language} />
 
-            <p className="mt-4 text-xs text-[#68736b]">
-              akinsikufemi@onpeeps.com
-            </p>
+            <div className="mt-7 border-t border-[#17211b]/10 pt-5">
+              <p className="text-xs font-semibold text-[#68736b]">
+                {t.reachUs}
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {CONTACT_PHONE && (
+                  <>
+                    <a
+                      href={`https://wa.me/${CONTACT_PHONE.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold"
+                    >
+                      <MessageCircle size={15} />
+                      WhatsApp
+                    </a>
+
+                    <a
+                      href={`tel:${CONTACT_PHONE.replace(/\s/g, "")}`}
+                      className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold"
+                    >
+                      <Phone size={15} />
+                      {t.call}
+                    </a>
+                  </>
+                )}
+
+                <a
+                  href={`mailto:${CONTACT_EMAIL}`}
+                  className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold"
+                >
+                  <Mail size={15} />
+                  {CONTACT_EMAIL}
+                </a>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -518,6 +694,128 @@ export default function Page() {
         </footer>
       </div>
     </main>
+  );
+}
+
+type FormText = (typeof content)[Language]["form"];
+
+function ContactForm({
+  form,
+  language,
+}: {
+  form: FormText;
+  language: Language;
+}) {
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
+    "idle",
+  );
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatus("sending");
+
+    const data = new FormData(event.currentTarget);
+    const body = new URLSearchParams();
+    data.forEach((value, key) => body.append(key, String(value)));
+
+    try {
+      // Netlify Forms picks up submissions posted to the static form in public/__forms.html.
+      const response = await fetch("/__forms.html", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+      });
+
+      if (!response.ok)
+        throw new Error(`Form submission failed: ${response.status}`);
+      setStatus("sent");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  if (status === "sent") {
+    return (
+      <p className="mt-6 flex items-center gap-3 rounded-2xl bg-white/70 p-4 text-sm font-semibold">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#c7f36b]">
+          <Check size={15} />
+        </span>
+        {form.sent}
+      </p>
+    );
+  }
+
+  const inputClass =
+    "w-full rounded-2xl border border-[#17211b]/10 bg-white/80 px-4 py-3 text-base outline-none sm:text-sm placeholder:text-[#68736b] focus:border-[#17211b]/40";
+
+  return (
+    <form
+      name={FORM_NAME}
+      onSubmit={handleSubmit}
+      className="mt-6 flex flex-col gap-3"
+    >
+      <input type="hidden" name="form-name" value={FORM_NAME} />
+      <input type="hidden" name="language" value={language} />
+
+      <p hidden>
+        <label>
+          Don&apos;t fill this out: <input name="bot-field" />
+        </label>
+      </p>
+
+      <input
+        name="name"
+        required
+        autoComplete="name"
+        placeholder={form.name}
+        aria-label={form.name}
+        className={inputClass}
+      />
+      <input
+        name="email"
+        type="email"
+        required
+        autoComplete="email"
+        placeholder={form.email}
+        aria-label={form.email}
+        className={inputClass}
+      />
+      <input
+        name="phone"
+        type="tel"
+        autoComplete="tel"
+        placeholder={form.phone}
+        aria-label={form.phone}
+        className={inputClass}
+      />
+      <input
+        name="place"
+        required
+        placeholder={form.place}
+        aria-label={form.place}
+        className={inputClass}
+      />
+      <textarea
+        name="message"
+        rows={3}
+        placeholder={form.message}
+        aria-label={form.message}
+        className={`${inputClass} resize-none`}
+      />
+
+      {status === "error" && (
+        <p className="text-sm font-medium text-[#a2412c]">{form.error}</p>
+      )}
+
+      <button
+        type="submit"
+        disabled={status === "sending"}
+        className="mt-1 inline-flex items-center justify-center gap-3 rounded-full bg-[#17211b] px-5 py-3.5 text-sm font-semibold text-white disabled:opacity-60"
+      >
+        {status === "sending" ? form.sending : form.submit}
+        <ArrowRight size={16} />
+      </button>
+    </form>
   );
 }
 
@@ -569,7 +867,7 @@ function LanguageSelect({
           aria-label="Select language"
           value={language}
           onChange={(event) => setLanguage(event.target.value as Language)}
-          className="h-9 w-[72px] appearance-none border-0 bg-transparent pl-0.5 pr-4 text-xs font-semibold text-[#17211b] outline-none focus:ring-0"
+          className="h-9 w-18 appearance-none border-0 bg-transparent pl-0.5 pr-4 text-xs font-semibold text-[#17211b] outline-none focus:ring-0"
         >
           <option value="pt">🇵🇹 PT</option>
           <option value="en">🇬🇧 EN</option>
